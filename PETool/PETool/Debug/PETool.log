@@ -1,2 +1,13 @@
-﻿  PETool.cpp
+﻿  Gobal.cpp
+c:\users\win10\desktop\零时文件\c++\petool\petool\gobal.cpp(387): warning C4101: “new_size”: 未引用的局部变量
+c:\users\win10\desktop\零时文件\c++\petool\petool\gobal.cpp(597): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\win10\desktop\零时文件\c++\petool\petool\gobal.cpp(603): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\win10\desktop\零时文件\c++\petool\petool\gobal.cpp(612): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\win10\desktop\零时文件\c++\petool\petool\gobal.cpp(696): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\win10\desktop\零时文件\c++\petool\petool\gobal.cpp(896): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\win10\desktop\零时文件\c++\petool\petool\gobal.cpp(980): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\win10\desktop\零时文件\c++\petool\petool\gobal.cpp(1003): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\win10\desktop\零时文件\c++\petool\petool\gobal.cpp(1021): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\win10\desktop\零时文件\c++\petool\petool\gobal.cpp(1048): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\win10\desktop\零时文件\c++\petool\petool\gobal.cpp(525): warning C4715: “RVA_to_FOA”: 不是所有的控件路径都返回值
   PETool.vcxproj -> C:\Users\win10\Desktop\零时文件\c++\PETool\Debug\PETool.exe

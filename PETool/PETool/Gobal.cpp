@@ -77,7 +77,7 @@ DWORD Read_file_buffer(IN LPSTR path,OUT LPVOID *buffer) {
 		}
 
 
-		cout << "文件大小为:" << size_exe << endl;
+		cout << hex<<"文件大小为(hex):" << size_exe << endl;
 
 		pfilebuffer = malloc(size_exe * sizeof(char));
 		if (pfilebuffer == NULL) {  //创建堆内存空间失败
@@ -524,8 +524,6 @@ DWORD RVA_to_FOA(IN DWORD RVA, IN PIMAGE_FILE_HEADER pPEHeader) {
 	}
 }
 
-
-
 void ShowIED(IN LPVOID pfile_buffer) {
 	
 	PIMAGE_DOS_HEADER pDosHeader = NULL;
@@ -877,7 +875,7 @@ void TestShowReLocation(IN LPVOID pfile_buffer) {
 
 
 	//得到pImageBaseReLocationRVA,位于data_directory的第六个位置
-	pImageBaseReLocationRVA = pOptionHeader->DataDirectory[5].VirtualAddress;
+	pImageBaseReLocationRVA = pOptionHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress;
 	if (pImageBaseReLocationRVA != 0) {
 	//image_base_relocation
 	pImageBaseReLocation = (PIMAGE_BASE_RELOCATION)(RVA_to_FOA(pImageBaseReLocationRVA, pPEHeader)+(DWORD)pfile_buffer);
@@ -912,8 +910,6 @@ void TestShowReLocation(IN LPVOID pfile_buffer) {
 	return;
 
 }
-
-
 
 void MoveIEDtoNewSg(IN LPSTR from_path, OUT LPSTR to_path) {
 
@@ -1099,8 +1095,113 @@ void MoveIEDtoNewSg(IN LPSTR from_path, OUT LPSTR to_path) {
 			+ (DWORD)pLastSectionHeader->VirtualAddress;
 
 		Save_buffer(to_path,pfile_buffer,file_size);
-
+		
+		free(pfile_buffer);
 	}
 	
+
+}
+
+void TestShowIID(IN LPVOID pfile_buffer) {
+
+	PIMAGE_DOS_HEADER pDosHeader = NULL;
+	PIMAGE_NT_HEADERS pNTHeader = NULL;
+	PIMAGE_FILE_HEADER pPEHeader = NULL;
+	PIMAGE_OPTIONAL_HEADER32 pOptionHeader = NULL;
+	PIMAGE_SECTION_HEADER pLastSectionHeader = NULL, pSectionHeader = NULL;
+
+	DWORD pImportDescriptorRVA = 0;
+	PIMAGE_IMPORT_DESCRIPTOR pImportDescriptor = NULL;
+
+	int result = 0;
+
+	if (pfile_buffer == NULL) {
+		cout << "输入缓冲区无效" << endl;
+		return;
+	}
+	//MZ标记
+	if (*((PWORD)pfile_buffer) != IMAGE_DOS_SIGNATURE) {
+		cout << "不是有效MZ标记\n" << endl;
+		return;
+	}
+	pDosHeader = (PIMAGE_DOS_HEADER)pfile_buffer;
+	//PE文件
+	if (*((PWORD)((DWORD)pfile_buffer + pDosHeader->e_lfanew)) != IMAGE_NT_SIGNATURE) {
+		cout << "不是有效PE文件" << endl;
+		return;
+	}
+	//NT头
+	pNTHeader = (PIMAGE_NT_HEADERS)((DWORD)pfile_buffer + pDosHeader->e_lfanew);
+	//标准pe头
+	pPEHeader = (PIMAGE_FILE_HEADER)(((DWORD)pNTHeader) + 4);
+	//可选pe头
+	pOptionHeader = (PIMAGE_OPTIONAL_HEADER32)((DWORD)pPEHeader + IMAGE_SIZEOF_FILE_HEADER);
+	//第一个节头指针
+	pSectionHeader = (PIMAGE_SECTION_HEADER)((DWORD)pOptionHeader + pPEHeader->SizeOfOptionalHeader);
+
+
+	//得到导入表的rva,导入表位于datadirectory的第二个位置
+	pImportDescriptorRVA = pOptionHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress;
+
+	//定义表示数组结尾的null元素！
+	PIMAGE_IMPORT_DESCRIPTOR null_iid ;
+	PIMAGE_THUNK_DATA null_thunk;
+
+	memset(&null_iid, 0, sizeof(null_iid));
+	memset(&null_thunk, 0, sizeof(null_thunk));
+
+	if (pImportDescriptorRVA != 0) {
+		pImportDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)(RVA_to_FOA(pImportDescriptorRVA, pPEHeader) + (DWORD)pfile_buffer);
+			//循环打印导入表信息
+		for (
+			int i = 0;
+			memcmp(pImportDescriptor, &null_iid, sizeof(PIMAGE_IMPORT_DESCRIPTOR)) != 0; //判断是否到结尾
+			i++) {
+
+
+			LPSTR dll_name = (LPSTR)(
+				RVA_to_FOA(pImportDescriptor->Name, pPEHeader)
+				+ (DWORD)pfile_buffer);
+
+			cout << "---------------------------------------\n"
+				<< "第" << i << "个导入表名称\t"
+				<< dll_name << endl;
+
+
+			//输出INT信息
+			PIMAGE_THUNK_DATA pThunk = (PIMAGE_THUNK_DATA)(
+				RVA_to_FOA(pImportDescriptor->OriginalFirstThunk, pPEHeader)
+				+ (DWORD)pfile_buffer
+				);
+			if (pThunk != NULL) {
+				for (int j = 0;
+					memcmp(pThunk, &null_thunk, sizeof(PIMAGE_THUNK_DATA)) != 0;
+					j++)
+				{
+					if (pThunk->u1.AddressOfData&IMAGE_ORDINAL_FLAG32) {
+
+						cout << hex<<j << "按序号导入\t"
+							<< (pThunk->u1.AddressOfData&IMAGE_ORDINAL_FLAG32) << endl;
+					}
+					else {
+
+						PIMAGE_IMPORT_BY_NAME pFunname = (PIMAGE_IMPORT_BY_NAME)(
+							RVA_to_FOA(pThunk->u1.ForwarderString, pPEHeader)
+							+ (DWORD)pfile_buffer
+							);
+						cout<<hex << j << "按名称导入\t"
+							<< "hint\t" << pFunname->Hint
+							<< "\tname\t" << pFunname->Name << endl;
+					}
+					pThunk++;
+				}
+			}
+			
+		
+			//
+			pImportDescriptor++;
+			}
+	}
+
 
 }

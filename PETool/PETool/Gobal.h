@@ -91,3 +91,9 @@ IN LPSTR from_path ----读取文件路径
 OUT LPSTR to_path---保存路径
 */
 void MoveIEDtoNewSg(IN LPSTR from_path, OUT LPSTR to_path);
+
+/*
+ShowIID 输出导入表
+IN LPVOID pfile_buffer---file_buffer位置
+*/
+void TestShowIID(IN LPVOID pfile_buffer);
